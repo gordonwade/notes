@@ -163,6 +163,7 @@
 ### Summary
 * Replication can be a good way to improve latency, availability (uptime), and/or throughput (particularly on data reads)
 * The difficulty comes from handling changes to data, which can be done with `single-leader`, `multi-leader`, or `leaderless` architectures
+* `single-leader` implementations are the most straightforward and easiest to reason about. `multi-leader` and `leaderless` implementations can provide better availability, but come at the cost of weaker guarantees of consistency.
 
 ### Leaders and Followers
 * When operating a system with multiple `replicas`, every write must be processed by every replica. One way to do this is with `leader-based replication`:
@@ -195,3 +196,31 @@
 ### Multi-Leader Replication
 
 ### Leaderless Replication
+* Some systems do not use a leader at all, instead relying on coordination between nodes. This includes `Dynamo`, `Riak`, `Cassandra`, `Voldemort`.
+* With this architecture, both read and write requests are sent to multiple nodes simultaneously.
+* Because the application continues running even if a particular node goes down, data can become stale. There are a few ways to deal with this:
+  - `Read repair` relies on the client to detect stale values during a read request and update the stale node at that time. This relies on data being read frequently.
+  - A background `anti-entropy process` can also be run to constantly check for differences and update lagging nodes. Because of the leaderless architecture, writes performed by this process are unordered, which can cause long lag times.
+* `Quorum` reads and writes rely in the number of successfully written nodes `w` and the number of successfully read nodes `r` to be greater than the total number of nodes `n` (`w + r > n`) to ensure that up-to-date data is always present in a request.
+  - The exact allocation is typically configurable and the optimal choice depends on the use case (e.g. this will affect speed of both reads and writes as well as fault tolerance)
+* The values of `w` and `r` can also be set to less than the total `n` but this increases risk of reading stale values (in order to achieve lower latency)
+* Staleness is much easier to monitor in leader-based systems, where it can be inferred based on the difference in replication log position between leader and follower nodes.
+* Things get more complicated when you consider applications where the total cluster size is beyond `n` nodes where your data would normally live. A `sloppy quorum` can be used to write to `w` nodes outside of the intended `n` in the case that some of the `n` nodes are unreachable / down. The data then needs to be sent to the correct nodes when they become available via a `hinted handoff`.
+* Leaderless replication can be a good choice for multi-datacenter applications, and typically have built-in configuration options to support this.
+* Conflict resolution of concurrent writes can be more complicated in leaderless systems.
+  - One way to do it is to rely on `last write wins (LWW)`, but this implies loss of data (the earlier write will be discarded), which is not always acceptable.
+  - Another option is to include a notion of versioning (e.g. a `version number` or in a multi-node system a per-replica `version vector`) which can be used to determine the causal dependencies or concurrency of writes. One downside is that this can require complex merging and handling logic in the client-side application code.
+
+
+## Chapter 6: Partitioning
+### Summary
+
+### Partitioning and Replication
+
+### Partitioning of Key-Value Data
+
+### Partitioning and Secondary Indexes
+
+### Rebalancing Partitions
+
+### Request Routing
