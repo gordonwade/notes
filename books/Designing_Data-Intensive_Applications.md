@@ -214,13 +214,24 @@
 
 ## Chapter 6: Partitioning
 ### Summary
+* `Partitioning` (known by many other names, including `sharding`) is a way of splitting large databases into subsets that can each be independently operated in order to increase scalability.
 
 ### Partitioning and Replication
+* Replication is typically used alongside partitioning.
+  - There are usually multiple copies of a partition on different nodes. Independently, each node may host copies of multiple partitions.
 
 ### Partitioning of Key-Value Data
+* Different methods of partitioning can be used to reduce `skew` (uneven load) and prevent certain nodes from becoming `hot spots` (which leads to bottlenecks and inefficient utilization)
+* Key range can be used to group data together logically using some type of key (e.g. name or timestamp). This has the benefit of allowing quick and easy range scans (because related data is likely to be on the same partition) but may have drawbacks with writes (e.g. current timestamps might all be written to the same partition)
+  - There is also the problem of potential `hot spots` being created by uneven access patterns
+* Keys can be hashed instead, resulting in more uniform distribution. However this trades off the ability for quick key-range queries.
+  - Cassandra offers a partial solution using `compound primary keys` where only the first part of the key is used in determining the partition. Thus, key-range queries can still be easily performed within a partition (e.g. based on `user`)
 
 ### Partitioning and Secondary Indexes
+*
 
 ### Rebalancing Partitions
+*
 
 ### Request Routing
+*
